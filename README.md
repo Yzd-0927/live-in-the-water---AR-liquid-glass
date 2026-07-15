@@ -1,2 +1,116 @@
-# live-in-the-water---AR-liquid-glass
-using liquid glass to fill your camera so as make u look like living in water
+# 🌊 水境 (Water Realm)
+
+**毛玻璃 + 水纹涟漪 + 彩虹人物屏蔽 — 纯前端实时摄像头互动体验**
+
+打开网页，允许摄像头，你就置身水中。
+画面自动变成**毛玻璃质感**，物体移动时**水纹滑动**，手指点按产生**圆形涟漪**。
+上传一张照片标记主角，其他人自动被**彩虹覆盖**，还留下**彩虹轨迹**。
+
+---
+
+## ✨ 效果预览
+
+| 功能 | 说明 |
+|------|------|
+| 🫧 毛玻璃 | 摄像头画面实时模糊为毛玻璃质感 |
+| 🌊 水纹滑动 | 画面中物体移动时自动产生水纹波浪 |
+| 💧 点击涟漪 | 手指点按产生圆形涟漪，扩散至边缘消失 |
+| 🌈 彩虹屏蔽 | 上传主角照片后，其他人被彩虹流光覆盖 |
+| 👣 彩虹轨迹 | 非主角走过之处残留彩虹，垃圾桶一键清除 |
+| 📷 截屏 / 🎬 录屏 | MP4 格式录屏，可直接发朋友圈 |
+| 🫗 iOS 26 液态玻璃 | 底部控制栏使用最新液态玻璃设计语言 |
+
+---
+
+## 🚀 快速开始
+
+### 方式一：直接访问（推荐）
+
+如果已部署到 GitHub Pages，直接访问：
+```
+https://<你的用户名>.github.io/水境/
+```
+
+### 方式二：本地运行
+
+```bash
+# 克隆仓库
+git clone https://github.com/<你的用户名>/水境.git
+cd 水境
+
+# 启动（任选一种）
+python3 -m http.server 8080    # Python 3
+# 或
+npx serve .                     # Node.js
+```
+
+然后打开 `http://localhost:8080/水境.html`，允许摄像头即可。
+
+> ⚠️ 摄像头 API 要求 HTTPS 或 localhost，直接用 `file://` 协议打开会无法使用。
+
+### 方式三：桌面一键启动
+
+| 平台 | 双击 |
+|------|------|
+| macOS | `启动水境.command` |
+| Windows | `启动水境.bat`（需安装 Python） |
+
+---
+
+## 🛠 技术栈
+
+| 技术 | 用途 |
+|------|------|
+| WebRTC (`getUserMedia`) | 摄像头画面捕获 |
+| Canvas 2D | 毛玻璃渲染 + 水纹物理模拟 |
+| 2D 波动方程 | 实时水纹涟漪物理引擎 |
+| WebCodecs + H.264 | 硬件编码 MP4 录屏 |
+| face-api.js | 人脸检测 + 识别匹配 |
+| mp4-muxer | 浏览器端 MP4 封装 |
+| CSS `backdrop-filter` | iOS 26 液态玻璃 UI |
+
+**零依赖构建工具，零后端服务，单个 HTML 文件即完整应用。**
+
+---
+
+## 📁 文件结构
+
+```
+水境/
+├── 水境.html           # 完整应用（唯一核心文件）
+├── 启动水境.command     # macOS 一键启动脚本
+├── 启动水境.bat         # Windows 一键启动脚本
+├── 使用说明.txt         # 使用说明
+└── README.md           # 本文件
+```
+
+---
+
+## 🔧 部署到 GitHub Pages
+
+1. 在 GitHub 新建仓库，命名为 `水境`
+2. 将本文件夹所有内容推送到仓库
+3. Settings → Pages → Source: `main` branch, root folder → Save
+4. 等待几秒，访问 `https://<用户名>.github.io/水境/水境.html`
+
+或把 `水境.html` 重命名为 `index.html`，访问根路径即可：
+```
+https://<用户名>.github.io/水境/
+```
+
+---
+
+## 📋 浏览器兼容性
+
+| 浏览器 | 摄像头 | 水纹效果 | 人脸识别 | MP4 录屏 |
+|--------|--------|----------|----------|----------|
+| Chrome 94+ | ✅ | ✅ | ✅ | ✅ WebCodecs |
+| Edge 94+ | ✅ | ✅ | ✅ | ✅ WebCodecs |
+| Safari 15+ | ✅ | ✅ | ✅ | ✅ MediaRecorder |
+| Firefox | ✅ | ✅ | ⚠️ | ⚠️ WebM only |
+
+---
+
+## 📄 License
+
+MIT — 随意使用、修改、分享。

@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>水境</title>
+    <style>
+        /* ========== Reset & Base ========== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: radial-gradient(ellipse at 50% 30%, #1a3a4a 0%, #0a1628 70%);
+            overflow: hidden;
+            height: 100dvh;
+            width: 100vw;
+            color: #fff;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .hidden { display: none !important; }
+
+        /* ========== Main Page ========== */
+        #main-page {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 28vh;
+        }
+
+        .title {
+            font-size: clamp(4rem, 10vw, 7rem);
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            background: linear-gradient(180deg, #e8f4f8 0%, #7ec8e0 50%, #4a9eb5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            filter: drop-shadow(0 2px 12px rgba(130, 210, 240, 0.3));
+            animation: titleShimmer 4s ease-in-out infinite;
+        }
+
+        @keyframes titleShimmer {
+            0%, 100% { filter: drop-shadow(0 2px 12px rgba(130, 210, 240, 0.3)); }
+            50% { filter: drop-shadow(0 4px 24px rgba(160, 230, 255, 0.55)); }
+        }
+
+        .subtitle {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            color: rgba(180, 220, 240, 0.5);
+            letter-spacing: 0.3em;
+            margin-top: 8px;
+            font-weight: 300;
+        }
+
+        .card {
+            margin-top: clamp(40px, 8vh, 80px);
+            padding: 24px 56px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 28px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            animation: float 4s ease-in-out infinite;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-4px);
+            box-shadow:
+                0 16px 48px rgba(0, 0, 0, 0.2),
+                0 0 0 1px rgba(130, 210, 240, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+
+        .card:active {
+            transform: scale(0.96);
+            transition: transform 0.1s ease;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .card-text {
+            font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            color: rgba(220, 240, 250, 0.9);
+        }
+
+        .card-hint {
+            font-size: 0.75rem;
+            color: rgba(180, 210, 230, 0.45);
+            text-align: center;
+            margin-top: 8px;
+            letter-spacing: 0.1em;
+        }
+
+        /* ========== Water Page ========== */
+        #water-page {
+            position: fixed;
+            inset: 0;
+            background: #000;
+        }
+
+        #display-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: max(16px, env(safe-area-inset-top, 16px));
+            left: 16px;
+            z-index: 10;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .back-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* ========== Liquid Glass Bottom Bar (iOS 26 style) ========== */
+        .bottom-bar {
+            position: absolute;
+            bottom: max(20px, env(safe-area-inset-bottom, 20px));
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 24px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(40px) saturate(200%);
+            -webkit-backdrop-filter: blur(40px) saturate(200%);
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
+            border-radius: 48px;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.18),
+                inset 0 -0.5px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        /* Camera toggle button */
+        .control-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            box-shadow:
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+
+        .control-btn:active {
+            transform: scale(0.9);
+            transition: transform 0.1s ease;
+        }
+
+        .control-btn.off {
+            background: rgba(255, 80, 80, 0.2);
+            border-color: rgba(255, 100, 100, 0.3);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        /* Opacity control group */
+        .opacity-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 8px;
+        }
+
+        .opacity-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .opacity-value {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            min-width: 24px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Custom range slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 80px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            transition: transform 0.15s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+        }
+
+        /* ========== Square Trigger Button ========== */
+        .square-trigger {
+            position: relative;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        .square-trigger.fading {
+            opacity: 0;
+            transform: scale(0.7);
+            pointer-events: none;
+        }
+
+        .square-icon {
+            display: block;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 6px;
+            transition: inherit;
+        }
+
+        /* ========== Pill Menu (1×2 vertical, liquid glass) ========== */
+        .pill-menu {
+            position: absolute;
+            z-index: 9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            width: 60px;
+            padding: 18px 0;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(40px) saturate(200%);
+            -webkit-backdrop-filter: blur(40px) saturate(200%);
+            border: 0.5px solid rgba(255, 255, 255, 0.22);
+            border-radius: 30px;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.25),
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.18),
+                inset 0 -0.5px 0 rgba(255, 255, 255, 0.04);
+            transform: scaleY(0);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        opacity 0.3s ease;
+            transform-origin: bottom center;
+        }
+
+        .pill-menu.open {
+            transform: scaleY(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .dot-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px 0;
+            opacity: 0;
+            transition: opacity 0.3s ease 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            width: 100%;
+        }
+
+        .pill-menu.open .dot-btn {
+            opacity: 1;
+        }
+
+        .dot-btn:active {
+            transform: scale(0.85);
+            transition: transform 0.1s ease;
+        }
+
+        .dot {
+            display: block;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .white-dot {
+            background: #fff;
+            box-shadow:
+                0 2px 8px rgba(255, 255, 255, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .white-dot:active {
+            box-shadow:
+                0 0 20px rgba(255, 255, 255, 0.6),
+                0 2px 8px rgba(255, 255, 255, 0.4);
+        }
+
+        .red-dot {
+            background: #ff3b30;
+            box-shadow:
+                0 2px 8px rgba(255, 59, 48, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .red-dot.recording {
+            animation: recordPulse 0.8s ease-in-out infinite;
+        }
+
+        @keyframes recordPulse {
+            0%, 100% {
+                box-shadow:
+                    0 2px 8px rgba(255, 59, 48, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            }
+            50% {
+                box-shadow:
+                    0 0 24px rgba(255, 59, 48, 0.9),
+                    0 4px 16px rgba(255, 59, 48, 0.6),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            }
+        }
+
+        .dot-label {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.08em;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .dot-divider {
+            width: 24px;
+            height: 0.5px;
+            background: rgba(255, 255, 255, 0.12);
+            margin: 4px 0;
+        }
+
+        /* Screenshot flash */
+        .screenshot-flash {
+            position: fixed;
+            inset: 0;
+            background: #fff;
+            z-index: 100;
+            pointer-events: none;
+            animation: flashOut 0.4s ease forwards;
+        }
+
+        @keyframes flashOut {
+            0%   { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* ========== Loading overlay ========== */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.1em;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* ========== Page transition ========== */
+        #water-page {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ========== Trail & Overlay Canvases ========== */
+        #trail-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            object-fit: cover;
+        }
+
+        #overlay-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+            object-fit: cover;
+        }
+
+        /* ========== Photo Upload Button ========== */
+        .photo-upload-btn {
+            position: absolute;
+            top: max(16px, env(safe-area-inset-top, 16px));
+            right: 16px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 24px;
+            border: 0.5px solid rgba(255, 255, 255, 0.18);
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            color: #fff;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .photo-upload-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+
+        .photo-upload-btn.set {
+            border-color: rgba(100, 220, 150, 0.5);
+            background: rgba(100, 220, 150, 0.12);
+        }
+
+        .photo-upload-btn.set .photo-status {
+            color: rgba(150, 255, 200, 0.9);
+        }
+
+        .photo-status {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.55);
+            letter-spacing: 0.05em;
+        }
+
+        /* ========== Trash Button ========== */
+        .trash-btn {
+            background: rgba(30, 30, 32, 0.7) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+
+        .trash-btn:hover {
+            background: rgba(50, 50, 55, 0.7) !important;
+            border-color: rgba(255, 255, 255, 0.25) !important;
+        }
+
+        .trash-btn:active {
+            background: rgba(255, 59, 48, 0.35) !important;
+            border-color: rgba(255, 100, 100, 0.4) !important;
+            transition: all 0.1s ease !important;
+        }
+
+        .trash-btn.flash-clear {
+            background: rgba(255, 59, 48, 0.5) !important;
+            border-color: rgba(255, 100, 100, 0.6) !important;
+            transition: all 0.15s ease !important;
+        }
+
+        /* ========== Responsive ========== */
+        @media (max-width: 480px) {
+            .bottom-bar {
+                gap: 10px;
+                padding: 12px 18px;
+                border-radius: 40px;
+            }
+            input[type="range"] {
+                width: 60px;
+            }
+            .card {
+                padding: 20px 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== Main Page ==================== -->
+    <div id="main-page">
+        <h1 class="title">水 境</h1>
+        <p class="subtitle">WATER REALM</p>
+        <div class="card" id="enter-card">
+            <div class="card-text">身 处 水 中</div>
+            <div class="card-hint">点击进入</div>
+        </div>
+    </div>
+
+    <!-- ==================== Water Page ==================== -->
+    <div id="water-page" class="hidden">
+        <button class="back-btn" id="back-btn" aria-label="返回">←</button>
+
+        <canvas id="display-canvas"></canvas>
+
+        <!-- Rainbow trail canvas (persistent trails) -->
+        <canvas id="trail-canvas"></canvas>
+
+        <!-- Rainbow overlay canvas (live non-main-body overlay) -->
+        <canvas id="overlay-canvas"></canvas>
+
+        <!-- Hidden video for camera feed -->
+        <video id="camera-video" playsinline autoplay muted style="display:none;"></video>
+
+        <!-- Hidden processing canvas -->
+        <canvas id="proc-canvas" style="display:none;"></canvas>
+
+        <!-- Hidden file input for main body photo -->
+        <input type="file" id="photo-input" accept="image/*" style="display:none;">
+
+        <!-- Loading -->
+        <div class="loading-overlay" id="loading">
+            <span class="loading-text">摄像头启动中...</span>
+        </div>
+
+        <!-- Main body photo upload indicator -->
+        <button class="photo-upload-btn" id="photo-upload-btn" aria-label="上传主人物照片" title="上传主人物照片以识别">
+            <span>👤</span>
+            <span class="photo-status" id="photo-status">未设定</span>
+        </button>
+
+        <!-- Bottom Controls (Liquid Glass) -->
+        <div class="bottom-bar">
+            <button class="control-btn" id="camera-toggle" aria-label="摄像头开关">
+                <span id="camera-icon">📷</span>
+            </button>
+            <div class="opacity-control">
+                <span class="opacity-label">透明度</span>
+                <input type="range" min="0" max="100" value="60" id="opacity-slider">
+                <span class="opacity-value" id="opacity-value">60</span>
+            </div>
+            <button class="control-btn trash-btn" id="trash-btn" aria-label="清除彩虹残留">
+                <span>🗑️</span>
+            </button>
+            <button class="control-btn square-trigger" id="menu-trigger" aria-label="更多">
+                <span class="square-icon"></span>
+            </button>
+        </div>
+
+        <!-- Expandable Pill Menu (1×2 vertical) -->
+        <div class="pill-menu" id="pill-menu">
+            <button class="dot-btn" id="screenshot-btn" aria-label="截屏">
+                <span class="dot white-dot"></span>
+                <span class="dot-label">截屏</span>
+            </button>
+            <div class="dot-divider"></div>
+            <button class="dot-btn" id="record-btn" aria-label="录屏">
+                <span class="dot red-dot" id="record-dot"></span>
+                <span class="dot-label" id="record-label">录屏</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // ===================== DOM Elements =====================
+        const mainPage = document.getElementById('main-page');
+        const waterPage = document.getElementById('water-page');
+        const enterCard = document.getElementById('enter-card');
+        const backBtn = document.getElementById('back-btn');
+        const displayCanvas = document.getElementById('display-canvas');
+        const displayCtx = displayCanvas.getContext('2d', { willReadFrequently: false });
+        const procCanvas = document.getElementById('proc-canvas');
+        const procCtx = procCanvas.getContext('2d', { willReadFrequently: true });
+        const cameraVideo = document.getElementById('camera-video');
+        const cameraToggle = document.getElementById('camera-toggle');
+        const cameraIcon = document.getElementById('camera-icon');
+        const opacitySlider = document.getElementById('opacity-slider');
+        const opacityValueEl = document.getElementById('opacity-value');
+        const loadingEl = document.getElementById('loading');
+        const trailCanvas = document.getElementById('trail-canvas');
+        const trailCtx = trailCanvas.getContext('2d', { willReadFrequently: false });
+        const overlayCanvas = document.getElementById('overlay-canvas');
+        const overlayCtx = overlayCanvas.getContext('2d', { willReadFrequently: false });
+        const photoInput = document.getElementById('photo-input');
+        const photoUploadBtn = document.getElementById('photo-upload-btn');
+        const photoStatus = document.getElementById('photo-status');
+        const trashBtn = document.getElementById('trash-btn');
+
+        // ===================== State =====================
+        const SCALE = 3;                    // Processing at 1/3 display resolution
+        const DAMPING = 0.965;             // Water damping per frame
+        const DISPLACEMENT_STRENGTH = 2.5; // Pixel displacement per unit water height
+        const MOTION_THRESHOLD = 18;       // Luminance diff threshold for motion
+        const MOTION_ENERGY = 4;           // Energy added to water per motion cell
+        const TAP_AMPLITUDE = 300;         // Tap ripple amplitude
+        const TAP_INNER_R = 1;             // Tap ripple inner radius (cells)
+        const TAP_OUTER_R = 6;             // Tap ripple outer radius (cells)
+
+        let cameraOn = true;
+        let transparency = 60;             // 0=opaque effect, 100=fully transparent
+        let animationId = null;
+        let stream = null;
+
+        // Processing dimensions
+        let procW, procH;
+
+        // Display dimensions
+        let displayW, displayH;
+
+        // Water simulation arrays (Float32 for performance)
+        let waterCurrent = null;
+        let waterPrevious = null;
+        let waterNext = null;
+        let numCells = 0;
+
+        // Motion detection
+        let prevLuminance = null;
+
+        // Touch tracking
+        let touchStartTime = 0;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchMoved = false;
+        let touchActive = false;
+        let touchCurrentX = 0;
+        let touchCurrentY = 0;
+
+        // ===================== Page Navigation =====================
+        function enterWaterPage() {
+            mainPage.classList.add('hidden');
+            waterPage.classList.remove('hidden');
+            initWaterPage();
+        }
+
+        function exitWaterPage() {
+            // Stop recording if active
+            if (isRecording) stopRecording();
+            // Close menu if open
+            if (menuOpen) closePillMenu();
+            // Stop face detection
+            if (faceDetectTimer) {
+                clearTimeout(faceDetectTimer);
+                faceDetectTimer = null;
+            }
+            detectedFaces = [];
+            mainBodyIndex = -1;
+            stopCamera();
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            waterPage.classList.add('hidden');
+            mainPage.classList.remove('hidden');
+
+            // Reset water state
+            waterCurrent = null;
+            waterPrevious = null;
+            waterNext = null;
+            prevLuminance = null;
+        }
+
+        enterCard.addEventListener('click', enterWaterPage);
+        backBtn.addEventListener('click', exitWaterPage);
+
+        // ===================== Camera =====================
+        async function startCamera() {
+            try {
+                loadingEl.classList.remove('hidden');
+                const constraints = {
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    },
+                    audio: false
+                };
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraVideo.srcObject = stream;
+                await cameraVideo.play();
+                cameraOn = true;
+                cameraIcon.textContent = '📷';
+                cameraToggle.classList.remove('off');
+                loadingEl.classList.add('hidden');
+            } catch (err) {
+                console.error('摄像头访问失败:', err);
+                loadingEl.innerHTML = '<span class="loading-text" style="color:rgba(255,150,150,0.8)">无法访问摄像头</span>';
+                cameraOn = false;
+                cameraIcon.textContent = '📷‍➖';
+                cameraToggle.classList.add('off');
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            cameraVideo.srcObject = null;
+        }
+
+        async function toggleCamera() {
+            if (cameraOn) {
+                stopCamera();
+                cameraOn = false;
+                cameraIcon.textContent = '📷‍➖';
+                cameraToggle.classList.add('off');
+                loadingEl.classList.add('hidden');
+            } else {
+                await startCamera();
+            }
+        }
+
+        cameraToggle.addEventListener('click', toggleCamera);
+
+        // ===================== Water Simulation =====================
+        function initWaterGrid() {
+            numCells = procW * procH;
+            waterCurrent = new Float32Array(numCells);
+            waterPrevious = new Float32Array(numCells);
+            waterNext = new Float32Array(numCells);
+            prevLuminance = new Float32Array(numCells);
+        }
+
+        function stepWaterSimulation() {
+            if (!waterCurrent) return;
+
+            const w = procW;
+            const h = procH;
+
+            // Compute next water state using 2D wave equation
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    const idx = y * w + x;
+                    // Discretized wave equation:
+                    // next = (sum of 4 neighbors) / 2 - previous
+                    const neighborSum =
+                        waterCurrent[idx - 1] +
+                        waterCurrent[idx + 1] +
+                        waterCurrent[idx - w] +
+                        waterCurrent[idx + w];
+
+                    let next = (neighborSum / 2) - waterPrevious[idx];
+                    next *= DAMPING;
+
+                    // Extra damping near edges (absorbing boundary)
+                    const distToEdge = Math.min(x, y, w - 1 - x, h - 1 - y);
+                    if (distToEdge < 4) {
+                        next *= 0.7 + 0.075 * distToEdge;
+                    }
+
+                    waterNext[idx] = next;
+                }
+            }
+
+            // Swap buffers
+            const tmp = waterPrevious;
+            waterPrevious = waterCurrent;
+            waterCurrent = waterNext;
+            waterNext = tmp;
+        }
+
+        function addWaterEnergy(cellX, cellY, amount) {
+            if (!waterCurrent) return;
+            const idx = cellY * procW + cellX;
+            if (idx >= 0 && idx < numCells) {
+                waterCurrent[idx] += amount;
+            }
+        }
+
+        function addTapRipple(px, py) {
+            if (!waterCurrent) return;
+            const cx = Math.round(px / SCALE);
+            const cy = Math.round(py / SCALE);
+
+            for (let dy = -TAP_OUTER_R; dy <= TAP_OUTER_R; dy++) {
+                for (let dx = -TAP_OUTER_R; dx <= TAP_OUTER_R; dx++) {
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist >= TAP_INNER_R && dist <= TAP_OUTER_R) {
+                        const wx = cx + dx;
+                        const wy = cy + dy;
+                        if (wx >= 0 && wx < procW && wy >= 0 && wy < procH) {
+                            const falloff = (dist - TAP_INNER_R) / (TAP_OUTER_R - TAP_INNER_R);
+                            const val = TAP_AMPLITUDE * (1 - falloff) * Math.cos(falloff * Math.PI * 0.5);
+                            const idx = wy * procW + wx;
+                            waterCurrent[idx] += val;
+                        }
+                    }
+                }
+            }
+        }
+
+        function addMotionRipple(px, py, intensity) {
+            if (!waterCurrent) return;
+            const cx = Math.round(px / SCALE);
+            const cy = Math.round(py / SCALE);
+            const r = 2;
+            const amount = MOTION_ENERGY * intensity;
+
+            for (let dy = -r; dy <= r; dy++) {
+                for (let dx = -r; dx <= r; dx++) {
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist <= r) {
+                        const wx = cx + dx;
+                        const wy = cy + dy;
+                        if (wx >= 0 && wx < procW && wy >= 0 && wy < procH) {
+                            const val = amount * (1 - dist / r) * (Math.random() * 0.5 + 0.5);
+                            waterCurrent[wy * procW + wx] += val;
+                        }
+                    }
+                }
+            }
+        }
+
+        // ===================== Rendering =====================
+        function getLuminance(r, g, b) {
+            return 0.299 * r + 0.587 * g + 0.114 * b;
+        }
+
+        function processFrame() {
+            if (!cameraOn || cameraVideo.readyState < 2) return;
+
+            // 1. Draw video to processing canvas (1/SCALE resolution → natural blur)
+            const videoAspect = cameraVideo.videoWidth / cameraVideo.videoHeight;
+            const canvasAspect = procW / procH;
+            let sx, sy, sw, sh;
+
+            if (videoAspect > canvasAspect) {
+                sh = cameraVideo.videoHeight;
+                sw = sh * canvasAspect;
+                sx = (cameraVideo.videoWidth - sw) / 2;
+                sy = 0;
+            } else {
+                sw = cameraVideo.videoWidth;
+                sh = sw / canvasAspect;
+                sx = 0;
+                sy = (cameraVideo.videoHeight - sh) / 2;
+            }
+
+            procCtx.drawImage(cameraVideo, sx, sy, sw, sh, 0, 0, procW, procH);
+
+            // 2. Get pixel data for motion detection and displacement
+            const srcImageData = procCtx.getImageData(0, 0, procW, procH);
+            const src = srcImageData.data;
+
+            // 3. Detect motion by comparing luminance with previous frame
+            if (prevLuminance) {
+                for (let i = 0; i < numCells; i++) {
+                    const pxIdx = i * 4;
+                    const lum = getLuminance(src[pxIdx], src[pxIdx + 1], src[pxIdx + 2]);
+                    const diff = Math.abs(lum - prevLuminance[i]);
+                    if (diff > MOTION_THRESHOLD) {
+                        const x = i % procW;
+                        const y = Math.floor(i / procW);
+                        addMotionRipple(x * SCALE, y * SCALE, diff / 255);
+                    }
+                    prevLuminance[i] = lum;
+                }
+            } else {
+                // First frame: just store luminance
+                for (let i = 0; i < numCells; i++) {
+                    const pxIdx = i * 4;
+                    prevLuminance[i] = getLuminance(src[pxIdx], src[pxIdx + 1], src[pxIdx + 2]);
+                }
+            }
+
+            // 4. Add energy from active touch (non-tap movement)
+            if (touchActive && touchMoved && cameraOn) {
+                addMotionRipple(touchCurrentX, touchCurrentY, 0.6);
+            }
+
+            // 5. Step water simulation
+            stepWaterSimulation();
+
+            // 6. Create displaced output at processing resolution
+            const outImageData = procCtx.createImageData(procW, procH);
+            const out = outImageData.data;
+
+            for (let y = 0; y < procH; y++) {
+                for (let x = 0; x < procW; x++) {
+                    const wi = x;
+                    const wj = y;
+                    const widx = wj * procW + wi;
+
+                    // Compute displacement from water gradient
+                    let dx = 0, dy = 0;
+                    if (wi > 0 && wi < procW - 1 && wj > 0 && wj < procH - 1) {
+                        dx = (waterCurrent[widx + 1] - waterCurrent[widx - 1]) * DISPLACEMENT_STRENGTH;
+                        dy = (waterCurrent[widx + procW] - waterCurrent[widx - procW]) * DISPLACEMENT_STRENGTH;
+                    }
+
+                    // Clamp displacement to prevent extreme distortion
+                    dx = Math.max(-20, Math.min(20, dx));
+                    dy = Math.max(-20, Math.min(20, dy));
+
+                    const sx2 = Math.round(Math.min(Math.max(x + dx, 0), procW - 1));
+                    const sy2 = Math.round(Math.min(Math.max(y + dy, 0), procH - 1));
+
+                    const srcIdx = (sy2 * procW + sx2) * 4;
+                    const outIdx = widx * 4;
+
+                    out[outIdx] = src[srcIdx];
+                    out[outIdx + 1] = src[srcIdx + 1];
+                    out[outIdx + 2] = src[srcIdx + 2];
+                    out[outIdx + 3] = 255;
+                }
+            }
+
+            procCtx.putImageData(outImageData, 0, 0);
+
+            // 7. Render to display canvas
+            displayCtx.clearRect(0, 0, displayW, displayH);
+
+            // Draw original clear video (full screen, cover fit)
+            const dvAspect = displayW / displayH;
+            let dsx, dsy, dsw, dsh;
+            if (videoAspect > dvAspect) {
+                dsh = displayH;
+                dsw = dsh * videoAspect;
+                dsx = (displayW - dsw) / 2;
+                dsy = 0;
+            } else {
+                dsw = displayW;
+                dsh = dsw / videoAspect;
+                dsx = 0;
+                dsy = (displayH - dsh) / 2;
+            }
+            displayCtx.drawImage(cameraVideo, dsx, dsy, dsw, dsh);
+
+            // Overlay water effect with alpha
+            const effectAlpha = 1 - transparency / 100;
+            if (effectAlpha > 0.005) {
+                displayCtx.save();
+                displayCtx.globalAlpha = effectAlpha;
+                displayCtx.imageSmoothingEnabled = true;
+                displayCtx.imageSmoothingQuality = 'medium';
+                displayCtx.drawImage(procCanvas, 0, 0, displayW, displayH);
+                displayCtx.restore();
+            }
+        }
+
+        // ===================== Main Loop =====================
+        function renderLoop(timestamp) {
+            processFrame();
+            // Render rainbow effects if there are non-main-body faces
+            if (detectedFaces.length > 0) {
+                updateTrails(timestamp);
+                renderRainbowOverlay(timestamp);
+            }
+            // Feed frames to WebCodecs encoder
+            if (isRecording && recordingMethod === 'webcodecs' && encoder && encoder.state === 'configured') {
+                try {
+                    const elapsed = Math.round((performance.now() - recordingStartTime) * 1000); // µs
+                    const frame = new VideoFrame(displayCanvas, {
+                        timestamp: elapsed,
+                        duration: Math.round(1_000_000 / 30)
+                    });
+                    encoder.encode(frame, { keyFrame: false });
+                    frame.close();
+                } catch (e) { /* ignore per-frame errors */ }
+            }
+            animationId = requestAnimationFrame(renderLoop);
+        }
+
+        // ===================== Touch Handling =====================
+        function getTouchPos(e) {
+            const touch = e.touches[0] || e.changedTouches[0];
+            const rect = displayCanvas.getBoundingClientRect();
+            return {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
+            };
+        }
+
+        displayCanvas.addEventListener('touchstart', (e) => {
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+            e.preventDefault();
+            const pos = getTouchPos(e);
+            touchStartTime = Date.now();
+            touchStartX = pos.x;
+            touchStartY = pos.y;
+            touchMoved = false;
+            touchActive = true;
+            touchCurrentX = pos.x;
+            touchCurrentY = pos.y;
+        }, { passive: false });
+
+        displayCanvas.addEventListener('touchmove', (e) => {
+            if (!touchActive) return;
+            e.preventDefault();
+            const pos = getTouchPos(e);
+            touchCurrentX = pos.x;
+            touchCurrentY = pos.y;
+            const moveDist = Math.hypot(pos.x - touchStartX, pos.y - touchStartY);
+            if (moveDist > 8) {
+                touchMoved = true;
+            }
+        }, { passive: false });
+
+        displayCanvas.addEventListener('touchend', (e) => {
+            if (!touchActive) return;
+            e.preventDefault();
+            touchActive = false;
+            const duration = Date.now() - touchStartTime;
+            const moveDist = Math.hypot(touchCurrentX - touchStartX, touchCurrentY - touchStartY);
+
+            // Tap detection: short duration + minimal movement
+            if (!touchMoved && duration < 300 && moveDist < 10) {
+                addTapRipple(touchStartX, touchStartY);
+            }
+        }, { passive: false });
+
+        displayCanvas.addEventListener('touchcancel', () => {
+            touchActive = false;
+        });
+
+        // Mouse support for desktop
+        displayCanvas.addEventListener('mousedown', (e) => {
+            const rect = displayCanvas.getBoundingClientRect();
+            touchStartTime = Date.now();
+            touchStartX = e.clientX - rect.left;
+            touchStartY = e.clientY - rect.top;
+            touchMoved = false;
+            touchActive = true;
+            touchCurrentX = touchStartX;
+            touchCurrentY = touchStartY;
+        });
+
+        displayCanvas.addEventListener('mousemove', (e) => {
+            if (!touchActive) return;
+            const rect = displayCanvas.getBoundingClientRect();
+            touchCurrentX = e.clientX - rect.left;
+            touchCurrentY = e.clientY - rect.top;
+            const moveDist = Math.hypot(touchCurrentX - touchStartX, touchCurrentY - touchStartY);
+            if (moveDist > 5) touchMoved = true;
+        });
+
+        displayCanvas.addEventListener('mouseup', (e) => {
+            if (!touchActive) return;
+            touchActive = false;
+            const duration = Date.now() - touchStartTime;
+            const moveDist = Math.hypot(touchCurrentX - touchStartX, touchCurrentY - touchStartY);
+            if (!touchMoved && duration < 300 && moveDist < 10) {
+                addTapRipple(touchStartX, touchStartY);
+            }
+        });
+
+        displayCanvas.addEventListener('mouseleave', () => {
+            touchActive = false;
+        });
+
+        // ===================== Opacity Control =====================
+        opacitySlider.addEventListener('input', () => {
+            transparency = parseInt(opacitySlider.value);
+            opacityValueEl.textContent = transparency;
+        });
+
+        // ===================== Initialization =====================
+        function resizeCanvases() {
+            const dpr = 1; // Use CSS pixels for performance (effect is blurry anyway)
+            const rect = waterPage.getBoundingClientRect();
+            displayW = rect.width;
+            displayH = rect.height;
+
+            displayCanvas.width = displayW;
+            displayCanvas.height = displayH;
+
+            trailCanvas.width = displayW;
+            trailCanvas.height = displayH;
+
+            overlayCanvas.width = displayW;
+            overlayCanvas.height = displayH;
+
+            procW = Math.max(Math.floor(displayW / SCALE), 1);
+            procH = Math.max(Math.floor(displayH / SCALE), 1);
+
+            procCanvas.width = procW;
+            procCanvas.height = procH;
+
+            // Re-initialize water grid on resize
+            if (waterCurrent) {
+                initWaterGrid();
+            }
+        }
+
+        function initWaterPage() {
+            resizeCanvases();
+            initWaterGrid();
+            startCamera();
+
+            // Start face detection
+            loadFaceModels().then(() => {
+                if (!waterPage.classList.contains('hidden')) {
+                    runFaceDetection();
+                }
+            });
+
+            if (!animationId) {
+                animationId = requestAnimationFrame(renderLoop);
+            }
+        }
+
+        // Handle window resize
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (!waterPage.classList.contains('hidden')) {
+                    resizeCanvases();
+                }
+            }, 300);
+        });
+
+        // Handle orientation change on mobile
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (!waterPage.classList.contains('hidden')) {
+                    resizeCanvases();
+                }
+            }, 500);
+        });
+
+        // Handle page visibility (pause when hidden)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+            } else {
+                if (!waterPage.classList.contains('hidden') && !animationId) {
+                    animationId = requestAnimationFrame(renderLoop);
+                }
+            }
+        });
+
+        // ===================== Pill Menu =====================
+        const menuTrigger = document.getElementById('menu-trigger');
+        const pillMenu = document.getElementById('pill-menu');
+        const screenshotBtn = document.getElementById('screenshot-btn');
+        const recordBtn = document.getElementById('record-btn');
+        const recordDot = document.getElementById('record-dot');
+        const recordLabel = document.getElementById('record-label');
+
+        let menuOpen = false;
+        let isRecording = false;
+        // Recording state
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let encoder = null;           // VideoEncoder (WebCodecs)
+        let muxer = null;             // mp4-muxer instance
+        let recordingMethod = null;   // 'webcodecs' | 'mediarecorder'
+        let recordingStartTime = 0;
+        let mp4MuxerModule = null;    // cached dynamic import
+
+        function openPillMenu() {
+            menuOpen = true;
+            // Position pill menu above the bottom bar, centered on trigger
+            const triggerRect = menuTrigger.getBoundingClientRect();
+            const barRect = document.querySelector('.bottom-bar').getBoundingClientRect();
+            const cx = triggerRect.left + triggerRect.width / 2;
+            const pillW = 60;
+            pillMenu.style.left = (cx - pillW / 2) + 'px';
+            pillMenu.style.bottom = (window.innerHeight - barRect.top + 10) + 'px';
+
+            menuTrigger.classList.add('fading');
+            pillMenu.classList.add('open');
+        }
+
+        function closePillMenu() {
+            if (!menuOpen) return;
+            menuOpen = false;
+            menuTrigger.classList.remove('fading');
+            pillMenu.classList.remove('open');
+        }
+
+        menuTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (menuOpen) {
+                closePillMenu();
+            } else {
+                openPillMenu();
+            }
+        });
+
+        // Close menu when clicking outside
+
+        // ===================== Face Detection & Rainbow Effect =====================
+        let faceApiLoaded = false;
+        let faceApiLoading = false;
+        let referenceDescriptor = null;       // Float32Array descriptor from reference photo
+        let detectedFaces = [];               // Latest face detection results
+        let mainBodyIndex = -1;               // Index of main body in detectedFaces
+        let faceDetectTimer = null;
+        const FACE_DETECT_INTERVAL = 400;     // ms between face detections
+        const MATCH_THRESHOLD = 0.55;         // Euclidean distance threshold for face match
+
+        // Dynamically load face-api.js
+        async function ensureFaceApi() {
+            if (typeof faceapi !== 'undefined') return true;
+            if (faceApiLoading) {
+                // Wait for ongoing load
+                for (let i = 0; i < 50; i++) {
+                    if (typeof faceapi !== 'undefined') return true;
+                    await new Promise(r => setTimeout(r, 200));
+                }
+                return false;
+            }
+            faceApiLoading = true;
+            return new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js';
+                script.onload = () => {
+                    faceApiLoading = false;
+                    resolve(true);
+                };
+                script.onerror = () => {
+                    faceApiLoading = false;
+                    console.warn('⚠️ face-api.js 加载失败，人物识别功能不可用');
+                    resolve(false);
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // Load face detection/recognition models
+        async function loadFaceModels() {
+            if (faceApiLoaded) return true;
+            const ok = await ensureFaceApi();
+            if (!ok) return false;
+
+            const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights/';
+            try {
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                faceApiLoaded = true;
+                console.log('✅ 人脸识别模型加载完成');
+                return true;
+            } catch (err) {
+                console.warn('⚠️ 人脸模型加载失败:', err.message);
+                return false;
+            }
+        }
+
+        // Handle main body photo upload
+        async function handlePhotoUpload(file) {
+            const ok = await loadFaceModels();
+            if (!ok) {
+                alert('人脸识别模型加载失败，请检查网络连接后刷新重试');
+                return;
+            }
+            try {
+                const img = await faceapi.bufferToImage(file);
+                const detection = await faceapi
+                    .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 }))
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (!detection) {
+                    alert('未在照片中检测到人脸，请换一张清晰的正脸照片');
+                    return;
+                }
+
+                referenceDescriptor = Array.from(detection.descriptor);
+                photoUploadBtn.classList.add('set');
+                photoStatus.textContent = '已设定 ✓';
+                console.log('📷 主人物照片已录入');
+            } catch (err) {
+                console.error('照片处理失败:', err);
+                alert('照片处理失败，请重试');
+            }
+        }
+
+        // Face detection loop
+        async function runFaceDetection() {
+            if (!faceApiLoaded || !cameraOn || cameraVideo.readyState < 2) {
+                faceDetectTimer = setTimeout(runFaceDetection, FACE_DETECT_INTERVAL);
+                return;
+            }
+
+            try {
+                const detections = await faceapi
+                    .detectAllFaces(cameraVideo, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 }))
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                detectedFaces = detections.map(d => ({
+                    box: d.detection.box,
+                    descriptor: Array.from(d.descriptor),
+                    score: d.detection.score
+                }));
+
+                // Identify main body
+                if (referenceDescriptor && detectedFaces.length > 0) {
+                    let bestDist = Infinity;
+                    let bestIdx = -1;
+                    for (let i = 0; i < detectedFaces.length; i++) {
+                        const dist = faceapi.euclideanDistance(
+                            new Float32Array(referenceDescriptor),
+                            new Float32Array(detectedFaces[i].descriptor)
+                        );
+                        if (dist < MATCH_THRESHOLD && dist < bestDist) {
+                            bestDist = dist;
+                            bestIdx = i;
+                        }
+                    }
+                    mainBodyIndex = bestIdx; // -1 if no match found
+                } else if (detectedFaces.length > 0 && referenceDescriptor === null) {
+                    // No reference: largest face = main body
+                    let maxArea = 0;
+                    let maxIdx = 0;
+                    detectedFaces.forEach((f, i) => {
+                        const area = f.box.width * f.box.height;
+                        if (area > maxArea) { maxArea = area; maxIdx = i; }
+                    });
+                    mainBodyIndex = maxIdx;
+                } else {
+                    mainBodyIndex = -1;
+                }
+            } catch (err) {
+                // Silently ignore detection errors (e.g., no face visible)
+            }
+
+            faceDetectTimer = setTimeout(runFaceDetection, FACE_DETECT_INTERVAL);
+        }
+
+        // Get estimated body box from face box
+        function getBodyBox(faceBox) {
+            const bw = faceBox.width * 2.2;
+            const bh = faceBox.height * 4.5;
+            return {
+                x: faceBox.x - (bw - faceBox.width) / 2,
+                y: faceBox.y - faceBox.height * 0.2,
+                width: bw,
+                height: bh
+            };
+        }
+
+        // Render rainbow overlay on non-main-body people
+        function renderRainbowOverlay(time) {
+            overlayCtx.clearRect(0, 0, displayW, displayH);
+            if (detectedFaces.length === 0) return;
+
+            const scaleX = displayW / (cameraVideo.videoWidth || displayW);
+            const scaleY = displayH / (cameraVideo.videoHeight || displayH);
+
+            for (let i = 0; i < detectedFaces.length; i++) {
+                if (i === mainBodyIndex) continue; // Skip main body
+
+                const fb = detectedFaces[i].box;
+                const body = getBodyBox(fb);
+
+                // Scale to display coordinates
+                const bx = body.x * scaleX;
+                const by = body.y * scaleY;
+                const bw = body.width * scaleX;
+                const bh = body.height * scaleY;
+
+                // Clamp to display bounds
+                const cx = Math.max(0, bx);
+                const cy = Math.max(0, by);
+                const cw = Math.min(bw, displayW - cx);
+                const ch = Math.min(bh, displayH - cy);
+
+                if (cw <= 0 || ch <= 0) continue;
+
+                // Animated rainbow gradient
+                const hue = (time * 0.0008 + i * 0.3) % 1;
+                const grad = overlayCtx.createLinearGradient(cx, cy, cx + cw, cy + ch * 0.5);
+                for (let s = 0; s <= 8; s++) {
+                    const h = (hue + s * 0.125) % 1;
+                    grad.addColorStop(s / 8, `hsla(${Math.round(h * 360)}, 75%, 58%, 0.4)`);
+                }
+
+                // Draw rounded body overlay
+                const r = Math.min(16, cw * 0.15);
+                overlayCtx.fillStyle = grad;
+                overlayCtx.beginPath();
+                overlayCtx.moveTo(cx + r, cy);
+                overlayCtx.lineTo(cx + cw - r, cy);
+                overlayCtx.arcTo(cx + cw, cy, cx + cw, cy + r, r);
+                overlayCtx.lineTo(cx + cw, cy + ch - r);
+                overlayCtx.arcTo(cx + cw, cy + ch, cx + cw - r, cy + ch, r);
+                overlayCtx.lineTo(cx + r, cy + ch);
+                overlayCtx.arcTo(cx, cy + ch, cx, cy + ch - r, r);
+                overlayCtx.lineTo(cx, cy + r);
+                overlayCtx.arcTo(cx, cy, cx + r, cy, r);
+                overlayCtx.closePath();
+                overlayCtx.fill();
+
+                // Subtle shimmer lines
+                overlayCtx.strokeStyle = `hsla(${Math.round(hue * 360)}, 80%, 75%, 0.25)`;
+                overlayCtx.lineWidth = 1;
+                for (let ly = cy + 10; ly < cy + ch; ly += 18) {
+                    overlayCtx.beginPath();
+                    overlayCtx.moveTo(cx + 4, ly);
+                    overlayCtx.lineTo(cx + cw - 4, ly + Math.sin(ly * 0.1 + time * 0.003) * 4);
+                    overlayCtx.stroke();
+                }
+            }
+        }
+
+        // Update rainbow trails
+        function updateTrails(time) {
+            // Very slow global fade
+            trailCtx.fillStyle = 'rgba(0, 0, 0, 0.004)';
+            trailCtx.fillRect(0, 0, displayW, displayH);
+
+            if (detectedFaces.length === 0) return;
+
+            const scaleX = displayW / (cameraVideo.videoWidth || displayW);
+            const scaleY = displayH / (cameraVideo.videoHeight || displayH);
+
+            for (let i = 0; i < detectedFaces.length; i++) {
+                if (i === mainBodyIndex) continue;
+
+                const fb = detectedFaces[i].box;
+                const cx = (fb.x + fb.width / 2) * scaleX;
+                const cy = (fb.y + fb.height / 2) * scaleY;
+                const radius = Math.min(fb.width * scaleX, fb.height * scaleY) * 0.6;
+
+                const hue = (time * 0.001 + i * 0.35) % 1;
+                trailCtx.fillStyle = `hsla(${Math.round(hue * 360)}, 85%, 60%, 0.22)`;
+                trailCtx.beginPath();
+                trailCtx.arc(cx, cy, Math.max(radius, 8), 0, Math.PI * 2);
+                trailCtx.fill();
+
+                // Brighter center
+                trailCtx.fillStyle = `hsla(${Math.round(hue * 360)}, 90%, 70%, 0.18)`;
+                trailCtx.beginPath();
+                trailCtx.arc(cx, cy, Math.max(radius * 0.35, 4), 0, Math.PI * 2);
+                trailCtx.fill();
+            }
+        }
+
+        // Clear all trails (trash button)
+        function clearTrails() {
+            trailCtx.clearRect(0, 0, displayW, displayH);
+            // Brief red flash on trash button
+            trashBtn.classList.add('flash-clear');
+            setTimeout(() => trashBtn.classList.remove('flash-clear'), 200);
+        }
+
+        trashBtn.addEventListener('click', clearTrails);
+
+        // Photo upload button
+        photoUploadBtn.addEventListener('click', () => {
+            photoInput.click();
+        });
+
+        photoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handlePhotoUpload(file);
+        });
+
+        // ===================== Trash Button =====================
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (menuOpen && !pillMenu.contains(e.target) && e.target !== menuTrigger && !menuTrigger.contains(e.target)) {
+                closePillMenu();
+            }
+        });
+
+        // Prevent menu clicks from bubbling
+        pillMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // ===================== Screenshot =====================
+        function takeScreenshot() {
+            // Brief flash effect
+            const flash = document.createElement('div');
+            flash.className = 'screenshot-flash';
+            document.body.appendChild(flash);
+            flash.addEventListener('animationend', () => flash.remove());
+
+            // Capture display canvas
+            displayCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                a.download = `水境_截屏_${timestamp}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+
+            closePillMenu();
+        }
+
+        screenshotBtn.addEventListener('click', takeScreenshot);
+
+        // ===================== Screen Recording (WebCodecs MP4) =====================
+
+        function downloadBlob(blob, ext) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            a.download = `水境_录屏_${ts}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function ensureMp4Muxer() {
+            if (mp4MuxerModule) return mp4MuxerModule;
+            console.log('📦 加载 MP4 封装库...');
+            mp4MuxerModule = await import('https://cdn.jsdelivr.net/npm/mp4-muxer@4.0.0/build/mp4-muxer.mjs');
+            console.log('✅ MP4 封装库就绪');
+            return mp4MuxerModule;
+        }
+
+        async function startWebCodecsRecording() {
+            let m;
+            try {
+                m = await ensureMp4Muxer();
+            } catch (e) {
+                console.warn('⚠️ MP4 muxer 加载失败，回退到 MediaRecorder:', e);
+                startMediaRecorderRecording();
+                return;
+            }
+
+            const { Muxer, ArrayBufferTarget } = m;
+
+            // Pad dimensions to even numbers (required by H.264)
+            const encW = displayW - (displayW % 2);
+            const encH = displayH - (displayH % 2);
+
+            // Test H.264 support
+            const codecs = ['avc1.42001E', 'avc1.4d001E', 'avc1.64001E'];
+            let bestCodec = null;
+            for (const c of codecs) {
+                const sup = await VideoEncoder.isConfigSupported({
+                    codec: c, width: encW, height: encH,
+                    bitrate: 5_000_000, framerate: 30
+                });
+                if (sup.supported) { bestCodec = c; break; }
+            }
+
+            if (!bestCodec) {
+                console.warn('⚠️ H.264 硬编码不支持，回退到 MediaRecorder');
+                startMediaRecorderRecording();
+                return;
+            }
+
+            console.log('🎬 WebCodecs MP4 录屏启动 | 编码:', bestCodec, '分辨率:', encW, 'x', encH);
+
+            // Create MP4 muxer
+            muxer = new Muxer({
+                target: new ArrayBufferTarget(),
+                video: { codec: 'avc1', width: encW, height: encH },
+                fastStart: 'in-memory'
+            });
+
+            // Create H.264 encoder
+            encoder = new VideoEncoder({
+                output: (chunk, meta) => {
+                    try { muxer.addVideoChunk(chunk, meta); }
+                    catch (e) { console.error('muxer addVideoChunk error:', e); }
+                },
+                error: (e) => {
+                    console.error('编码器错误:', e);
+                    stopRecording();
+                }
+            });
+
+            encoder.configure({
+                codec: bestCodec,
+                width: encW,
+                height: encH,
+                bitrate: 5_000_000,
+                framerate: 30,
+                latencyMode: 'quality'
+            });
+
+            recordingMethod = 'webcodecs';
+            recordingStartTime = performance.now();
+            recordedChunks = [];
+            isRecording = true;
+            recordDot.classList.add('recording');
+            recordLabel.textContent = '停止';
+        }
+
+        function startMediaRecorderRecording() {
+            if (!displayCanvas.captureStream) {
+                alert('当前浏览器不支持录屏');
+                return;
+            }
+
+            // Try MP4 first (Safari), then WebM
+            const mimeTypes = [
+                'video/mp4;codecs=avc1.42E01E',
+                'video/mp4;codecs=avc1',
+                'video/mp4',
+                'video/webm;codecs=vp9',
+                'video/webm;codecs=vp8',
+                'video/webm'
+            ];
+            let mimeType = '';
+            for (const t of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(t)) { mimeType = t; break; }
+            }
+
+            if (!mimeType) {
+                alert('当前浏览器不支持录屏，请使用 Chrome 或 Safari');
+                return;
+            }
+
+            console.log('🎬 MediaRecorder 录屏 | 格式:', mimeType);
+
+            const canvasStream = displayCanvas.captureStream(30);
+            let combinedStream = canvasStream;
+            if (stream) {
+                const audioTracks = stream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    combinedStream = new MediaStream([canvasStream.getVideoTracks()[0], ...audioTracks]);
+                }
+            }
+
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 5000000 });
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) recordedChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const actualType = mediaRecorder.mimeType || mimeType;
+                const blob = new Blob(recordedChunks, { type: actualType });
+                const isMp4 = actualType.startsWith('video/mp4');
+                downloadBlob(blob, isMp4 ? 'mp4' : 'webm');
+                recordedChunks = [];
+            };
+
+            mediaRecorder.onerror = () => {
+                alert('录屏出错，请重试');
+                stopRecording();
+            };
+
+            mediaRecorder.start(1000); // 1s chunks
+            recordingMethod = 'mediarecorder';
+            isRecording = true;
+            recordDot.classList.add('recording');
+            recordLabel.textContent = '停止';
+        }
+
+        function startRecording() {
+            if (isRecording) return;
+            // WebCodecs + H.264 = guaranteed MP4 (Chrome 94+, Edge 94+)
+            if (window.VideoEncoder) {
+                startWebCodecsRecording();
+            } else {
+                startMediaRecorderRecording();
+            }
+        }
+
+        function stopRecording() {
+            if (!isRecording) return;
+            isRecording = false;
+            recordDot.classList.remove('recording');
+            recordLabel.textContent = '录屏';
+
+            if (recordingMethod === 'webcodecs') {
+                // Async flush + finalize
+                (async () => {
+                    try {
+                        if (encoder && encoder.state !== 'closed') {
+                            await encoder.flush();
+                            encoder.close();
+                        }
+                    } catch (e) { console.error('encoder flush error:', e); }
+                    encoder = null;
+
+                    if (muxer) {
+                        try {
+                            muxer.finalize();
+                            const buf = muxer.target.buffer;
+                            const blob = new Blob([buf], { type: 'video/mp4' });
+                            downloadBlob(blob, 'mp4');
+                            console.log('✅ MP4 录屏完成', (blob.size / 1024 / 1024).toFixed(1), 'MB');
+                        } catch (e) { console.error('muxer finalize error:', e); }
+                        muxer = null;
+                    }
+                    recordingMethod = null;
+                })();
+            } else if (recordingMethod === 'mediarecorder') {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+                recordingMethod = null;
+            }
+        }
+
+        function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+            closePillMenu();
+        }
+
+        recordBtn.addEventListener('click', toggleRecording);
+
+        // ===================== Keyboard shortcut =====================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !waterPage.classList.contains('hidden')) {
+                exitWaterPage();
+            }
+            // Spacebar for screenshot
+            if (e.key === ' ' && !waterPage.classList.contains('hidden') && !menuOpen) {
+                e.preventDefault();
+                takeScreenshot();
+            }
+        });
+
+        // Update pill menu position on resize
+        window.addEventListener('resize', () => {
+            if (menuOpen) {
+                const triggerRect = menuTrigger.getBoundingClientRect();
+                const barRect = document.querySelector('.bottom-bar').getBoundingClientRect();
+                const cx = triggerRect.left + triggerRect.width / 2;
+                pillMenu.style.left = (cx - 30) + 'px';
+                pillMenu.style.bottom = (window.innerHeight - barRect.top + 10) + 'px';
+            }
+        });
+
+        console.log('🌊 水境 (Water Realm) — 初始化完成');
+        console.log('  点击 "身处水中" 卡片开始体验');
+        console.log('  📷 摄像头需要 HTTPS 或 localhost 环境');
+        console.log('  💡 提示：点击画面产生涟漪，移动物体自动产生水纹');
+        console.log('  ⌨️  按 ESC 返回主界面');
+    })();
+    </script>
+</body>
+</html>
